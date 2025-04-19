@@ -1,15 +1,20 @@
-# FlashFilter (compact edition)
+# FlashFilter
 
-```
-# install deps
-git clone <repo>
-cd flashfilter
-python -m venv .venv && source .venv/bin/activate
-pip install opencv-python numpy scipy
+This is a proof of concept and a work in progress. It is not intended for production use.
 
-# run filter
-python -m flashfilter.cli input.mp4 output.mp4
-```
+## Description
+- Using image subtraction to detect area of flash in a frame. (Assuming previous frame is corrected and has no flash)
+- Generate a bitmask of the flash area.
+- Use interpolation to fill the flash area with the surrounding pixels in spatial and temporal domain.
 
-All heavy‑lifting sits in **src/flashfilter/core.py** – tweak parameters at the top or extend with new in‑painting methods later.
+## Usage
+Run the prep_data.py script to prepare the data into the frames directory.
+
+Run main.py and the output will be saved in the output directory.
+
+## TODO
+- Optimize interpolation methods and corresponding parameters to reduce artifacts.
+- Add more frames that are used for interpolation.
+- Try generative inpainting techniques.
+
 
