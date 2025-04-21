@@ -28,15 +28,24 @@ def temporal_interpolation(prev_frames, cur_frame, alpha=0.7, flow_params=None, 
 
     # 2. Build change mask using the most recent previous frame
     gray_prev0 = cv2.cvtColor(prev_frames[0], cv2.COLOR_BGR2GRAY)
-    diff       = cv2.subtract(gray_cur, gray_prev0)
-    diff_eq    = cv2.equalizeHist(diff)
-    kernel     = cv2.getStructuringElement(
-        cv2.MORPH_RECT, (morph_kernel_size, morph_kernel_size)
-    )
-    diff_clean = cv2.morphologyEx(diff_eq, cv2.MORPH_OPEN, kernel)
-    _, mask    = cv2.threshold(
-        diff_clean, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
+    # Convert the images to float32 for better precision
+    gray_cur = gray_cur.astype(np.float32)
+    gray_prev0 = gray_prev0.astype(np.float32)
+    # Compute the absolute difference and normalize
+    diff = cv2.absdiff(gray_cur, gray_prev0)
+    diff_eq = cv2.normalize(diff, None, 0, 255, cv2.NORM_MINMAX)
+
+    # Apply Gaussian blur to reduce noise
+    diff_eq = cv2.GaussianBlur(diff_eq, (5, 5), 0)
+    diff_eq = diff_eq.astype(np.uint8)
+
+    # Thresholding to create a binary mask
+    _, diff_eq = cv2.threshold(diff_eq, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # Morphological opening to remove small noise
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (morph_kernel_size, morph_kernel_size))
+    mask = cv2.morphologyEx(diff_eq, cv2.MORPH_OPEN, kernel)
+    # Invert the mask to get the changed regions
+    mask = cv2.bitwise_not(mask)
 
     # 3. For each previous frame, compute flow and warp to current
     warps = []
